@@ -6,64 +6,40 @@ from sklearn import tree
 from .vrpclass import Route, Plan, VectorPlan
 
 
-def build_first_plan(problem):
+def build_first_plan(problem, n_sols=1):
     for customer in problem.customers:
         assert problem.capacity > customer.demand and problem.time_bound > customer.servicetime
-    routes = []
-    load = 0
-    time = 0
-    travel_times = problem.travel_times
-    route_cuslist = [problem.customers[0]]
-    i = 0
-    select_sequence = list(range(1, len(problem.customers)))
-    random.shuffle(select_sequence)
-    while i < len(select_sequence):
 
-        load += problem.customers[select_sequence[i]].demand
-        time += route_cuslist[-1].get_distance(problem.customers[select_sequence[i]], travel_times)
-        time = max(time, problem.customers[select_sequence[i]].time_window[0])
-        if load < problem.capacity and time < problem.customers[select_sequence[i]].time_window[1]:
-            time += problem.customers[select_sequence[i]].servicetime
-            route_cuslist.append(problem.customers[select_sequence[i]])
-            i += 1
-        else:
+    init_P = []
+    for sol in range(n_sols):
+        routes = []
+        load = 0
+        time = 0
+        travel_times = problem.travel_times
+        route_cuslist = [problem.customers[0]]
+        i = 0
+        select_sequence = list(range(1, len(problem.customers)))
+        random.shuffle(select_sequence)
+        while i < len(select_sequence):
+
+            load += problem.customers[select_sequence[i]].demand
+            time += route_cuslist[-1].get_distance(problem.customers[select_sequence[i]], travel_times)
+            time = max(time, problem.customers[select_sequence[i]].time_window[0])
+            if load < problem.capacity and time < problem.customers[select_sequence[i]].time_window[1]:
+                time += problem.customers[select_sequence[i]].servicetime
+                route_cuslist.append(problem.customers[select_sequence[i]])
+                i += 1
+            else:
+                route_cuslist.append(problem.customers[0])
+                routes.append(Route(route_cuslist, travel_times))
+                route_cuslist = [problem.customers[0]]
+                load = 0
+                time = 0
+        if len(route_cuslist) > 1:
             route_cuslist.append(problem.customers[0])
             routes.append(Route(route_cuslist, travel_times))
-            route_cuslist = [problem.customers[0]]
-            load = 0
-            time = 0
-    if len(route_cuslist) > 1:
-        route_cuslist.append(problem.customers[0])
-        routes.append(Route(route_cuslist, travel_times))
-    return Plan(routes)
-
-
-def initialization(problem, size, max_route):
-    cus_id = list(range(1, len(problem.customers)))
-    P = []
-    while len(P) < size:
-        route_num = random.randint(1, max_route)
-        random.shuffle(cus_id)
-        routes = []
-        cus_per_route = int((len(problem.customers) - 1) / route_num)
-        i = 0
-        for building_route in range(route_num):
-            if building_route != route_num - 1:
-                cus_list = [problem.customers[0]]
-                for _ in range(cus_per_route):
-                    cus_list.append(problem.customers[cus_id[i]])
-                    i += 1
-                cus_list.append(problem.customers[0])
-                routes.append(Route(cus_list, problem.travel_times))
-            else:
-                cus_list = [problem.customers[0]]
-                while i < len(cus_id):
-                    cus_list.append(problem.customers[cus_id[i]])
-                    i += 1
-                cus_list.append(problem.customers[0])
-                routes.append(Route(cus_list, problem.travel_times))
-        P.append(Plan(routes))
-    return P
+        init_P.append(Plan(routes))
+    return init_P
 
 
 # 优先级编码实例化
@@ -71,7 +47,7 @@ def instantiating(problem, size, max_route, tree):
     Q = []
     rules = explain_tree(tree, problem.customers)
     if '1' not in rules:
-        return initialization(problem, size, max_route)
+        return build_first_plan(problem)
 
     positive_rules = []
     for positive_rule in rules['1']:
@@ -134,7 +110,9 @@ def instantiating_sub(problem, max_route, positive_rule):
             select.remove(vector[i])
 
     assert None not in vector
-    return VectorPlan(problem.customers, vector=vector).backto_plan(problem.customers, problem.travel_times)
+    vec_plan = VectorPlan(problem.customers, vector=vector).backto_plan(problem.customers, problem.travel_times)
+    vec_plan.assess_plan_feasibility(problem)
+    return vec_plan
 
 
 def explain_tree(clf, customers):

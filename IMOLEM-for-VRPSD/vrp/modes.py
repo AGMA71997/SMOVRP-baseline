@@ -80,15 +80,8 @@ def lem(evo_param, problem):
     converge_trace_all = []
     converge_trace_first = []
 
-    P = []
-    if evo_param.spec_init:
-        first_plan = util.build_first_plan(problem)
-        P.append(first_plan)
-        max_route = len(first_plan.routes)
-        P.extend(util.initialization(problem, evo_param.size - 1, max_route))
-    else:
-        max_route = len(problem.customers) - 1
-        P.extend(util.initialization(problem, evo_param.size, max_route))
+    P = util.build_first_plan(problem, n_sols=evo_param.size)
+    max_route = len(P[0].routes)
     Q = []
 
     high_part = int(0.3 * evo_param.size)
@@ -122,7 +115,7 @@ def lem(evo_param, problem):
         for plan in P:
             plan.RSM(evo_param.N, problem)
 
-        Q.extend([plan.copy() for plan in P])
+        Q.extend([plan.copy(problem.travel_times) for plan in P])
         # Q = util.deduplicate_objective(Q)
         Q = util.deduplicate(Q)
         if len(Q) > evo_param.size:
@@ -151,7 +144,7 @@ def lem(evo_param, problem):
 
             if evo_param.spec_inst:
                 newP = util.instantiating(problem, evo_param.size // 2, max_route, clf)
-                good = [plan.copy() for plan in Q[:evo_param.size // 2]]
+                good = [plan.copy(problem.travel_times) for plan in Q[:evo_param.size // 2]]
                 # for plan in newP:
                 #    plan.mutation(problem, 0.4, 0.5, 0.5, 0.3)
                 for plan in good:
@@ -170,7 +163,7 @@ def lem(evo_param, problem):
             result = util.show_result(Q, evo_param.N, problem)[0]
             converge_trace_all.append(result)
             converge_trace_first.append(util.show_result(util.pareto_first(Q), evo_param.N, problem)[0])
-            Q_trace.append([plan.copy() for plan in Q])
+            Q_trace.append([plan.copy(problem.travel_times) for plan in Q])
 
     # tree_str = tree.export_text(clf, feature_names=['customer '+str(i+1) for i in range(0, len(customers)-1)])
     # print(tree_str)

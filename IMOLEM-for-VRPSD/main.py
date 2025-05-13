@@ -75,7 +75,7 @@ def evo():
     population_trace_file = open('result/{}/{}{}_population_trace.pickle'.format(problem_name, mode, extra_name), 'wb')
 
     trace_all_file = open('result/{}/{}{}_trace_all.txt'.format(problem_name, mode, extra_name), 'w')
-    trace_first_file = open('result/{}/{}{}_trace_first.txt'.format(problem, mode, extra_name), 'w')
+    trace_first_file = open('result/{}/{}{}_trace_first.txt'.format(problem_name, mode, extra_name), 'w')
 
     # 存储结果
     pickle.dump(Q, population_file)

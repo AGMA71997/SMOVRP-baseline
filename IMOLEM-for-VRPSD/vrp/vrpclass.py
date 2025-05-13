@@ -24,14 +24,15 @@ class Problem:
     def read_data_from_tensor(self, problem_size, *problem_data):
         node_demand, time_windows, service_times, travel_times = problem_data
         self.capacity = 1
-        self.travel_times = travel_times
+        self.travel_times = travel_times.numpy()
         self.time_bound = 1
         self.customers = []
         for n in range(problem_size + 1):
             if n == 0:
                 cus = Customer(0, 0, 0.2, 0, [0, 1])
             else:
-                cus = Customer(n, node_demand[n - 1], 0.2, service_times[n - 1], time_windows[n - 1])
+                cus = Customer(n, node_demand[n - 1].item(), 0.2,
+                               service_times[n - 1].item(), time_windows[n - 1].numpy())
             self.customers.append(cus)
 
 
@@ -39,9 +40,11 @@ class Customer:
     def __init__(self, id, demand, standard_deviation, servicetime, time_window):
         self.id = id
         self.demand = demand
+        assert demand < 1
         self.standard_deviation = standard_deviation
         self.servicetime = servicetime
         self.time_window = time_window
+        assert time_window[0] < time_window[1]
         self.actual_tt = {}
 
     def __repr__(self):
@@ -65,6 +68,10 @@ class Route:
 
     def __getitem__(self, i):
         return self.customer_list[i]
+
+    def __repr__(self):
+        retstr = 'Route: ' + ' -> '.join([str(cus) for cus in self.customer_list])
+        return retstr
 
     def copy(self, travel_times):
         # 这里使用copy.deepcopy会导致客户内容也被复制
@@ -144,12 +151,36 @@ class Plan:
         self.avg_travel_times = avg_travel_times
         self.avg_makespan = avg_makespan
 
-    def copy(self):
-        return type(self)([route.copy() for route in self.routes], self.avg_travel_times,
+    def copy(self, travel_times):
+        return type(self)([route.copy(travel_times) for route in self.routes], self.avg_travel_times,
                           self.avg_makespan)
+
+    def __repr__(self):
+        num = len(self.routes)
+        retstr = 'Plan: 1 route' if num == 1 else 'Plan: {} routes'.format(num)
+        for route in self.routes:
+            retstr += '\n' + ' ' * 4 + str(route)
+        retstr += '\nmakespan={}\ntravel_times={}'.format(self.avg_makespan, self.avg_travel_times)
+        return retstr
 
     def __getitem__(self, i):
         return self.routes[i]
+
+    def assess_plan_feasibility(self, problem):
+        travel_times = problem.travel_times
+
+        for route in self.routes:
+            other = None
+            time = 0
+            load = 0
+            for customer in route.customer_list:
+                if other is not None:
+                    load += customer.demand
+                    assert load < problem.capacity
+                    time += customer.get_distance(other, travel_times)
+                    time = max(time, customer.time_window[0])
+                    assert time < customer.time_window[1]
+                    time += customer.servicetime
 
     def arrange(self):
         self.routes = sorted(self.routes, key=lambda route: route.customer_list[1].id)
@@ -297,6 +328,8 @@ class Plan:
             for route in self.routes:
                 if random.random() < shuffle_rate:
                     route.random_shuffle()
+
+        self.assess_plan_feasibility(problem)
 
     def RSM(self, N, problem):
         sum_makespan = 0
