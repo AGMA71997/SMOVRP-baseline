@@ -8,7 +8,7 @@ command = []
 pre = 'python main.py evo'
 
 modes = ['lem']
-datasets = [str(x) for x in range(50)]
+datasets = [str(x) for x in range(20)]
 MOmodes = ['DR']
 problem_size = '50'
 for mode in modes:

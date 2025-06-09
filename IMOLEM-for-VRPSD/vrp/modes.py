@@ -124,33 +124,41 @@ def lem(evo_param, problem):
             else:
                 Q = util.pareto_sort(Q, evo_param.size, MOmode=evo_param.MOmode)
 
-        if len(evo_param.MOmode) == 1:
-            P = util.target_sort(P, evo_param.size, evo_param.MOmode)
-        else:
-            P = util.pareto_sort(P, evo_param.size, MOmode=evo_param.MOmode)
+        if len(P) > 0:
+            if len(evo_param.MOmode) == 1:
+                P = util.target_sort(P, evo_param.size, evo_param.MOmode)
+            else:
+                P = util.pareto_sort(P, evo_param.size, MOmode=evo_param.MOmode)
 
-        if not evo_param.no_tree:
-            Hgroup = P[:high_part]
-            Lgroup = P[-low_part:]
+            if not evo_param.no_tree:
+                Hgroup = P[:high_part]
+                Lgroup = P[-low_part:]
 
-            for c in Hgroup:
-                vectors.append(VectorPlan(problem.customers, c).vector)
-                category.append(1)
-            for c in Lgroup:
-                vectors.append(VectorPlan(problem.customers, c).vector)
-                category.append(0)
+                for c in Hgroup:
+                    vectors.append(VectorPlan(problem.customers, c).vector)
+                    category.append(1)
+                for c in Lgroup:
+                    vectors.append(VectorPlan(problem.customers, c).vector)
+                    category.append(0)
 
-            clf.fit(vectors, category)
+                clf.fit(vectors, category)
 
             if evo_param.spec_inst:
+                to_add = []
                 newP = util.instantiating(problem, evo_param.size // 2, max_route, clf)
+                for plan in newP:
+                    feasible = plan.assess_plan_feasibility(problem)
+                    if feasible:
+                        to_add.append(plan)
                 good = [plan.copy(problem.travel_times) for plan in Q[:evo_param.size // 2]]
                 # for plan in newP:
                 #    plan.mutation(problem, 0.4, 0.5, 0.5, 0.3)
                 for plan in good:
                     plan.mutation(problem, 1, 0.5, 0.5, 0.3)
-                newP.extend(good)
-                P = newP
+                    feasible = plan.assess_plan_feasibility(problem)
+                    if feasible:
+                        to_add.append(plan)
+                P = to_add
             else:
                 P = util.instantiating(problem, evo_param.size, max_route, clf)
 

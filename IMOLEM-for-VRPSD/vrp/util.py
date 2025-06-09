@@ -111,7 +111,6 @@ def instantiating_sub(problem, max_route, positive_rule):
 
     assert None not in vector
     vec_plan = VectorPlan(problem.customers, vector=vector).backto_plan(problem.customers, problem.travel_times)
-    vec_plan.assess_plan_feasibility(problem)
     return vec_plan
 
 

@@ -106,18 +106,19 @@ class Route:
             other = customer
 
     def resource_consume(self, problem):
-        sum_time = 0
         make_span = 0
         travel_time = 0
+
         remain_goods = problem.capacity
+        sum_time = 0
         travel_times = problem.travel_times
         now = 0
         goto = 1
         while goto < len(self.customer_list):
             ETA = sum_time + self.customer_list[goto].get_distance(self.customer_list[now], travel_times)
             ETA = max(ETA, self.customer_list[goto].time_window[0])
-            if ETA < self.customer_list[goto].time_window[1] \
-                    and self.customer_list[goto].demand < remain_goods:
+            if ETA <= self.customer_list[goto].time_window[1] \
+                    and self.customer_list[goto].demand <= remain_goods:
                 sum_time = ETA
                 sum_time += self.customer_list[goto].servicetime
                 remain_goods -= self.customer_list[goto].demand
@@ -131,6 +132,8 @@ class Route:
                 sum_time = 0
                 now = 0
                 # goto不变，因为需要回去继续服务
+        if sum_time > make_span:
+            make_span = sum_time
         return make_span, travel_time
 
     def find_customer(self, cus_ids):
@@ -176,11 +179,15 @@ class Plan:
             for customer in route.customer_list:
                 if other is not None:
                     load += customer.demand
-                    assert load < problem.capacity
+                    if load > problem.capacity:
+                        return False
                     time += customer.get_distance(other, travel_times)
                     time = max(time, customer.time_window[0])
-                    assert time < customer.time_window[1]
+                    if time > customer.time_window[1]:
+                        return False
                     time += customer.servicetime
+                other = customer
+        return True
 
     def arrange(self):
         self.routes = sorted(self.routes, key=lambda route: route.customer_list[1].id)
@@ -329,17 +336,18 @@ class Plan:
                 if random.random() < shuffle_rate:
                     route.random_shuffle()
 
-        self.assess_plan_feasibility(problem)
-
     def RSM(self, N, problem):
         sum_makespan = 0
         sum_tt = 0
         for i in range(N):
+            round_makespan = 0
             for route in self.routes:
                 route.set_one_actual_tt(i)
                 makespan, tt = route.resource_consume(problem)
-                sum_makespan += makespan
+                if makespan > round_makespan:
+                    round_makespan = makespan
                 sum_tt += tt
+            sum_makespan += round_makespan
         self.avg_makespan = sum_makespan / N
         self.avg_travel_times = sum_tt / N
 
