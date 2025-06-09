@@ -1,4 +1,5 @@
 import argparse
+import math
 import random
 import numpy as np
 import torch
@@ -55,7 +56,7 @@ class Customer:
 
     def generate_actual_tts(self, N, other, travel_times):
         mean_tt = travel_times[other.id, self.id]
-        self.actual_tt[other.id] = np.random.normal(mean_tt, self.standard_deviation, N)
+        self.actual_tt[other.id] = mean_tt * np.random.normal(1, self.standard_deviation, N)
 
     def get_distance(self, other, travel_times):
         return travel_times[other.id, self.id]
@@ -64,7 +65,7 @@ class Customer:
 class Route:
     def __init__(self, customer_list, travel_times):
         self.customer_list = customer_list[:]
-        self.set_mean_tt(travel_times)
+        self.set_mean_tt()
 
     def __getitem__(self, i):
         return self.customer_list[i]
@@ -89,24 +90,15 @@ class Route:
         new_route = type(self)(new_route_customerlist, travel_times)
         return new_route
 
-    def set_mean_tt(self, travel_times):
-        self.actual_tt_list = []
-        other = None
-        for customer in self.customer_list:
-            if other is not None:
-                self.actual_tt_list.append(customer.get_distance(other, travel_times))
-                other = customer
+    def set_mean_tt(self):
+        self.mode = 'mean'
+        self.index = None
 
     def set_one_actual_tt(self, i):
-        self.actual_tt_list = []
-        other = None
-        for customer in self.customer_list:
-            if other is not None:
-                self.actual_tt_list.append(customer.actual_tt[other.id][i])
-            other = customer
+        self.mode = 'sample'
+        self.index = i
 
     def resource_consume(self, problem):
-        make_span = 0
         travel_time = 0
 
         remain_goods = problem.capacity
@@ -115,25 +107,26 @@ class Route:
         now = 0
         goto = 1
         while goto < len(self.customer_list):
-            ETA = sum_time + self.customer_list[goto].get_distance(self.customer_list[now], travel_times)
+            if self.mode == "mean":
+                cus_transit = self.customer_list[goto].get_distance(self.customer_list[now],
+                                                                    travel_times)
+            else:
+                cus_transit = self.customer_list[goto].actual_tt[self.customer_list[now].id][self.index]
+
+            ETA = sum_time + cus_transit
             ETA = max(ETA, self.customer_list[goto].time_window[0])
             if ETA <= self.customer_list[goto].time_window[1] \
                     and self.customer_list[goto].demand <= remain_goods:
                 sum_time = ETA
                 sum_time += self.customer_list[goto].servicetime
                 remain_goods -= self.customer_list[goto].demand
-                travel_time += self.customer_list[goto].get_distance(self.customer_list[now], travel_times)
+                travel_time += cus_transit
                 now = goto
                 goto += 1
             else:
-                remain_goods = problem.capacity
-                if sum_time > make_span:
-                    make_span = sum_time
-                sum_time = 0
-                now = 0
+                return math.inf, math.inf
                 # goto不变，因为需要回去继续服务
-        if sum_time > make_span:
-            make_span = sum_time
+        make_span = sum_time
         return make_span, travel_time
 
     def find_customer(self, cus_ids):
@@ -215,7 +208,7 @@ class Plan:
 
     def local_search_exploitation_SPS(self, problem):
         for route in self.routes:
-            route.set_mean_tt(problem.travel_times)
+            route.set_mean_tt()
         for index, route in enumerate(self.routes):
             old_makespan, old_travel_time = route.resource_consume(problem)
             new_route_customer_list = route.customer_list[1:-1]
@@ -231,7 +224,7 @@ class Plan:
 
     def local_search_exploitation_WDS(self, problem):
         for route in self.routes:
-            route.set_mean_tt(problem.travel_times)
+            route.set_mean_tt()
         for index, route in enumerate(self.routes):
             _, old_travel_time = route.resource_consume(problem)
             new_route_customer_list = route.customer_list[:]
@@ -306,7 +299,7 @@ class Plan:
         if len(self.routes) == 1:
             return
         for route in self.routes:
-            route.set_mean_tt(problem.travel_times)
+            route.set_mean_tt()
         sorted_routes = sorted(self.routes, key=lambda route: route.resource_consume(problem)[1])
         sorted_routes[0].customer_list.pop(-1)
         sorted_routes[1].customer_list.pop(0)
@@ -315,7 +308,7 @@ class Plan:
 
     def __split_longest_route(self, problem):
         for route in self.routes:
-            route.set_mean_tt(problem.travel_times)
+            route.set_mean_tt()
         sorted_routes = sorted(self.routes, key=lambda route: route.resource_consume(problem)[1], reverse=True)
         if len(sorted_routes[0].customer_list) == 3:
             return
@@ -339,17 +332,31 @@ class Plan:
     def RSM(self, N, problem):
         sum_makespan = 0
         sum_tt = 0
+        M = N
         for i in range(N):
             round_makespan = 0
+            ttt = 0
+            skip = False
             for route in self.routes:
                 route.set_one_actual_tt(i)
                 makespan, tt = route.resource_consume(problem)
+                if makespan == math.inf:
+                    M -= 1
+                    skip = True
+                    break
+
                 if makespan > round_makespan:
                     round_makespan = makespan
-                sum_tt += tt
-            sum_makespan += round_makespan
-        self.avg_makespan = sum_makespan / N
-        self.avg_travel_times = sum_tt / N
+                ttt += tt
+
+            print("Round: "+str(i))
+            if not skip:
+                sum_tt += ttt
+                sum_makespan += round_makespan
+
+        assert sum_makespan > 0 and sum_tt > 0
+        self.avg_makespan = sum_makespan / M
+        self.avg_travel_times = sum_tt / M
 
     def get_objective(self):
         return self.avg_makespan, self.avg_travel_times, len(self.routes)  # DRV
