@@ -67,8 +67,7 @@ def evo():
         mode = tmp
 
     # 检查存结果的文件夹
-    if not os.path.exists('result/' + problem_name):
-        os.mkdir('result/' + problem_name)
+    os.makedirs('result/' + str(size) + '/' + problem_name, exist_ok=True)
 
     out_file = open('result/{}/{}/{}{}.txt'.format(size, problem_name, mode, extra_name), 'w')
     population_file = open('result/{}/{}/{}{}_population.pickle'.format(size, problem_name, mode, extra_name), 'wb')

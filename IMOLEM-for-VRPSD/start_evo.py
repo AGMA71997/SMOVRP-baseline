@@ -8,14 +8,14 @@ command = []
 pre = 'python main.py evo'
 
 modes = ['lem']
-datasets = [str(x) for x in range(20)]
+datasets = [str(x) for x in range(3)]
 MOmodes = ['DR']
 problem_sizes = ['50', '100', '200']
 for problem_size in problem_sizes:
     for mode in modes:
         for dataset in datasets:
             for MOmode in MOmodes:
-                command.append(pre + ' ' + mode + ' ' + str(dataset) + ' ' + MOmode + ' '+ problem_size)
+                command.append(pre + ' ' + mode + ' ' + str(dataset) + ' ' + MOmode + ' ' + problem_size)
 
 '''for cmd in command:
     print(cmd)
