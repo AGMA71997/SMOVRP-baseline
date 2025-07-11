@@ -10,7 +10,7 @@ pre = 'python main.py evo'
 modes = ['lem']
 datasets = [str(x) for x in range(20)]
 MOmodes = ['DR']
-problem_sizes = ['50', '100', '200']
+problem_sizes = ['200']
 for problem_size in problem_sizes:
     for mode in modes:
         for dataset in datasets:

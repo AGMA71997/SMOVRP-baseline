@@ -279,7 +279,7 @@ def show_result(result_population, *argl):
 
     retstr = ''
     retstr += 'sum plan number= ' + str(len(result_population)) + '\n'
-    retstr += 'avg_routes: {}\navg_distance: {}\navg_pay: {}'.format(all_avg_routes, all_avg_makespan,
+    retstr += 'avg_routes: {}\navg_makespan: {}\navg_travel_time: {}'.format(all_avg_routes, all_avg_makespan,
                                                                      all_avg_tt) + '\n'
     hv = indicator_HV(result_population)
     spacing = indicator_Spacing(result_population)
