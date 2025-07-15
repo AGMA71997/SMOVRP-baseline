@@ -1,6 +1,8 @@
 import argparse
 import math
 import random
+import sys
+
 import numpy as np
 import torch
 
@@ -349,14 +351,16 @@ class Plan:
                     round_makespan = makespan
                 ttt += tt
 
-            print("Round: "+str(i))
+           # print("Round: "+str(i))
             if not skip:
                 sum_tt += ttt
                 sum_makespan += round_makespan
-
-        assert sum_makespan > 0 and sum_tt > 0
-        self.avg_makespan = sum_makespan / M
-        self.avg_travel_times = sum_tt / M
+        if M==0:
+            self.avg_makespan = math.inf
+            self.avg_travel_times = math.inf
+        else:
+            self.avg_makespan = sum_makespan / M
+            self.avg_travel_times = sum_tt / M
 
     def get_objective(self):
         return self.avg_makespan, self.avg_travel_times, len(self.routes)  # DRV

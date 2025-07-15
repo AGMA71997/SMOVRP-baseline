@@ -71,16 +71,16 @@ def evo():
 
     out_file = open('result/{}/{}/{}{}.txt'.format(size, problem_name, mode, extra_name), 'w')
     population_file = open('result/{}/{}/{}{}_population.pickle'.format(size, problem_name, mode, extra_name), 'wb')
-    population_trace_file = open(
+    '''population_trace_file = open(
         'result/{}/{}/{}{}_population_trace.pickle'.format(size, problem_name, mode, extra_name),
-        'wb')
+        'wb')'''
 
-    trace_all_file = open('result/{}/{}/{}{}_trace_all.txt'.format(size, problem_name, mode, extra_name), 'w')
-    trace_first_file = open('result/{}/{}/{}{}_trace_first.txt'.format(size, problem_name, mode, extra_name), 'w')
+    # trace_all_file = open('result/{}/{}/{}{}_trace_all.txt'.format(size, problem_name, mode, extra_name), 'w')
+    # trace_first_file = open('result/{}/{}/{}{}_trace_first.txt'.format(size, problem_name, mode, extra_name), 'w')
 
     # 存储结果
     pickle.dump(Q, population_file)
-    pickle.dump(Q_trace, population_trace_file)
+    # pickle.dump(Q_trace, population_trace_file)
 
     out_file.write('All solutions:\n' + util.show_result(Q, evo_param.N, problem)[1] + '\n\n')
     Qfirst = util.pareto_first(Q)
@@ -91,11 +91,11 @@ def evo():
             out_file.write('-' * 20 + 'Above solutions are non-dominated.' + '-' * 20 + '\n\n')
         out_file.write(str(plan) + '\n\n')
 
-    for t in converge_trace_all:
+    '''for t in converge_trace_all:
         trace_all_file.write("{} {} {} {} {}\n".format(t[0], t[1], t[2], t[3], t[4]))
     for t in converge_trace_first:
         trace_first_file.write("{} {} {} {} {}\n".format(t[0], t[1], t[2], t[3], t[4]))
-
+    '''
 
 def fig():
     arg_list = ['allp', 'comparison', 'noLearn', 'v123', 'lastp', 'map', 'dominate']

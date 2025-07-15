@@ -1,3 +1,4 @@
+import math
 import random
 from sklearn import tree
 from collections import deque
@@ -80,8 +81,8 @@ def lem(evo_param, problem):
     converge_trace_all = []
     converge_trace_first = []
 
-    P = util.build_first_plan(problem, n_sols=evo_param.size)
-    max_route = len(P[0].routes)
+    init_P = util.build_first_plan(problem, n_sols=evo_param.size)
+    max_route = len(init_P[0].routes)
     Q = []
 
     high_part = int(0.3 * evo_param.size)
@@ -112,8 +113,12 @@ def lem(evo_param, problem):
             for other in problem.customers:
                 if cus.id != other.id:
                     cus.generate_actual_tts(evo_param.N, other, problem.travel_times)
-        for plan in P:
+        P =[]
+        for plan in init_P:
             plan.RSM(evo_param.N, problem)
+            if plan.avg_travel_times == math.inf:
+                continue
+            P.append(plan)
 
         Q.extend([plan.copy(problem.travel_times) for plan in P])
         # Q = util.deduplicate_objective(Q)
