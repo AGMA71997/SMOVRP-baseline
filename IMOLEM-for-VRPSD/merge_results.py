@@ -1,5 +1,6 @@
 import pickle
 import os
+from vrp import util
 
 def merge_results(directory,inst_size):
     results = []
@@ -10,8 +11,9 @@ def merge_results(directory,inst_size):
         file_path = file_path+'/'+'lem_DRV_DR_'+str(inst_size)+'_population.pickle'
         pickle_in = open(file_path, 'rb')
         instance_Q = pickle.load(pickle_in)
+        non_dom_Q = util.pareto_first(instance_Q)
         inst_results = []
-        for plan in instance_Q:
+        for plan in non_dom_Q:
             inst_results.append((plan.avg_travel_times,plan.avg_makespan))
         results.append(inst_results)
 
