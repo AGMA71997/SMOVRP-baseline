@@ -1,10 +1,8 @@
-import argparse
 import math
 import random
-import sys
+from vrp.search_operators import relatedness_removal, regret_insertion
 
 import numpy as np
-import torch
 
 
 class Evo_param:
@@ -331,6 +329,11 @@ class Plan:
                 if random.random() < shuffle_rate:
                     route.random_shuffle()
 
+    def destroy_and_repiar(self,problem):
+        destroyed_sol = relatedness_removal(problem,self.routes,problem.travel_times)
+        repaired_sol = regret_insertion(problem,destroyed_sol,problem.travel_times)
+        return repaired_sol
+
     def RSM(self, N, problem):
         sum_makespan = 0
         sum_tt = 0
@@ -361,6 +364,7 @@ class Plan:
         else:
             self.avg_makespan = sum_makespan / M
             self.avg_travel_times = sum_tt / M
+        self.M = M
 
     def get_objective(self):
         return self.avg_makespan, self.avg_travel_times, len(self.routes)  # DRV
@@ -410,37 +414,8 @@ class VectorPlan:
 
         return plan
 
-
 def main():
-    parser = argparse.ArgumentParser(
-        description='Train Active Search on Instance')
-    parser.add_argument('--problem_size', type=int, default=50, help='Number of customers')
-    parser.add_argument('--index', type=int, default=1, help='Number of customers')
-
-    use_cuda = torch.cuda.is_available()
-    if use_cuda:
-        device = torch.device("cuda")
-    else:
-        device = torch.device("cpu")
-
-    run_args = parser.parse_args()
-
-    import os
-    cwd = os.getcwd()
-    data_path = os.path.dirname(cwd) + "/data/"
-
-    depot_xy, node_xy, node_demand, time_windows, service_times, travel_times = torch.load(
-        data_path + 'problem data ' + str(run_args.problem_size),
-        map_location=device)
-    node_demand = node_demand[run_args.index]
-    time_windows = time_windows[run_args.index]
-    service_times = service_times[run_args.index]
-    travel_times = travel_times[run_args.index]
-    problem_name = "instance_no_" + str(run_args.index)
-    problem = Problem(problem_name, run_args.problem_size, node_demand, time_windows,
-                      service_times, travel_times)
-    print(problem.problem_name)
-
+    pass
 
 if __name__ == '__main__':
     main()

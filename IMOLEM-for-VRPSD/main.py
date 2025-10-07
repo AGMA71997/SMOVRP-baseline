@@ -28,7 +28,7 @@ def evo():
     # 设置参数
     trace = True
     size = int(sys.argv[5])
-    maxiter = 2000
+    maxiter = 200
     N = 50
 
     spec_init = True
@@ -62,6 +62,17 @@ def evo():
     Q, Q_trace, converge_trace_all, converge_trace_first = eval('modes.{}(evo_param, problem)'.format(mode))
 
     util.check_plan_legal(Q, problem.customers)
+
+    for cus in problem.customers:
+        for other in problem.customers:
+            if cus.id != other.id:
+                cus.generate_actual_tts(500, other, problem.travel_times)
+
+    for num, plan in enumerate(Q):
+        plan.RSM(500,problem)
+        print("plan "+str(num)+" has objectives: "+str((plan.avg_travel_times,
+                                                       plan.avg_makespan)) )
+        print("Number of feasible realizations: "+str(plan.M))
 
     if tmp != None:
         mode = tmp
