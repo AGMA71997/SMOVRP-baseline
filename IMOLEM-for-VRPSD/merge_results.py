@@ -10,8 +10,7 @@ def merge_results(directory,inst_size):
         file_path = directory+'/'+file_name
         file_path = file_path+'/'+'lem_DRV_DR_'+str(inst_size)+'_population.pickle'
         pickle_in = open(file_path, 'rb')
-        instance_Q = pickle.load(pickle_in)
-        non_dom_Q = util.pareto_first(instance_Q)
+        non_dom_Q = pickle.load(pickle_in)
         inst_results = []
         for plan in non_dom_Q:
             inst_results.append((plan.avg_travel_times,plan.avg_makespan))
@@ -20,7 +19,7 @@ def merge_results(directory,inst_size):
     print(len(results))
     print(results)
 
-    results_file = open('results '+str(inst_size), 'wb')
+    results_file = open('LGA results '+str(inst_size), 'wb')
     pickle.dump(results, results_file)
     results_file.close()
 

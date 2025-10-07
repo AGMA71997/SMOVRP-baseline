@@ -28,7 +28,7 @@ def evo():
     # 设置参数
     trace = True
     size = int(sys.argv[5])
-    maxiter = 200
+    maxiter = 2000
     N = 50
 
     spec_init = True
@@ -63,24 +63,13 @@ def evo():
 
     util.check_plan_legal(Q, problem.customers)
 
-    for cus in problem.customers:
-        for other in problem.customers:
-            if cus.id != other.id:
-                cus.generate_actual_tts(500, other, problem.travel_times)
-
-    for num, plan in enumerate(Q):
-        plan.RSM(500,problem)
-        print("plan "+str(num)+" has objectives: "+str((plan.avg_travel_times,
-                                                       plan.avg_makespan)) )
-        print("Number of feasible realizations: "+str(plan.M))
-
     if tmp != None:
         mode = tmp
 
     # 检查存结果的文件夹
     os.makedirs('result/' + str(size) + '/' + problem_name, exist_ok=True)
 
-    out_file = open('result/{}/{}/{}{}.txt'.format(size, problem_name, mode, extra_name), 'w')
+    #out_file = open('result/{}/{}/{}{}.txt'.format(size, problem_name, mode, extra_name), 'w')
     population_file = open('result/{}/{}/{}{}_population.pickle'.format(size, problem_name, mode, extra_name), 'wb')
     '''population_trace_file = open(
         'result/{}/{}/{}{}_population_trace.pickle'.format(size, problem_name, mode, extra_name),
@@ -89,18 +78,29 @@ def evo():
     # trace_all_file = open('result/{}/{}/{}{}_trace_all.txt'.format(size, problem_name, mode, extra_name), 'w')
     # trace_first_file = open('result/{}/{}/{}{}_trace_first.txt'.format(size, problem_name, mode, extra_name), 'w')
 
-    # 存储结果
-    pickle.dump(Q, population_file)
-    # pickle.dump(Q_trace, population_trace_file)
-
-    out_file.write('All solutions:\n' + util.show_result(Q, evo_param.N, problem)[1] + '\n\n')
+    #out_file.write('All solutions:\n' + util.show_result(Q, evo_param.N, problem)[1] + '\n\n')
     Qfirst = util.pareto_first(Q)
-    out_file.write('Non-dominated solutions:\n' + util.show_result(Qfirst, evo_param.N, problem)[1] + '\n\n')
+    #out_file.write('Non-dominated solutions:\n' + util.show_result(Qfirst, evo_param.N, problem)[1] + '\n\n')
 
-    for num, plan in enumerate(Q):
+    '''for num, plan in enumerate(Q):
         if num == len(Qfirst):
             out_file.write('-' * 20 + 'Above solutions are non-dominated.' + '-' * 20 + '\n\n')
-        out_file.write(str(plan) + '\n\n')
+        out_file.write(str(plan) + '\n\n')'''
+
+    for cus in problem.customers:
+        for other in problem.customers:
+            if cus.id != other.id:
+                cus.generate_actual_tts(500, other, problem.travel_times)
+
+    for num, plan in enumerate(Qfirst):
+        plan.RSM(500, problem)
+        #print("plan " + str(num) + " has objectives: " + str((plan.avg_travel_times,
+                                                              #plan.avg_makespan)))
+        print("Number of feasible realizations: " + str(plan.M))
+
+    # 存储结果
+    pickle.dump(Qfirst, population_file)
+    # pickle.dump(Q_trace, population_trace_file)
 
     '''for t in converge_trace_all:
         trace_all_file.write("{} {} {} {} {}\n".format(t[0], t[1], t[2], t[3], t[4]))
