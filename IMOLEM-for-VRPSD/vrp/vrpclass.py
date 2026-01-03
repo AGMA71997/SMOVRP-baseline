@@ -20,6 +20,7 @@ class Evo_param:
 class Problem:
     def __init__(self, problem_name, problem_size, capacity, *problem_data):
         self.problem_name = problem_name
+        self.insertions = {}
         self.read_data_from_tensor(problem_size, capacity, *problem_data)
 
     def read_data_from_tensor(self, problem_size, *problem_data):
@@ -28,6 +29,7 @@ class Problem:
         self.travel_times = travel_times.numpy()
         self.time_bound = 1
         self.customers = []
+        self.num_customers = problem_size
         for n in range(problem_size + 1):
             if n == 0:
                 cus = Customer(0, 0, 0.2, 0, [0, 1])
@@ -319,7 +321,7 @@ class Plan:
 
     def mutation(self, problem, mutation_rate, elastic_rate, squeeze_rate, shuffle_rate):
         if random.random() < mutation_rate:
-            if random.random() < elastic_rate:
+            '''if random.random() < elastic_rate:
                 self.__partial_swap()
             elif random.random() < squeeze_rate:
                 self.__merge_shortest_route(problem)
@@ -327,7 +329,23 @@ class Plan:
                 self.__split_longest_route(problem)
             for route in self.routes:
                 if random.random() < shuffle_rate:
-                    route.random_shuffle()
+                    route.random_shuffle()'''
+            plan_rep = []
+            for route in self.routes:
+                route_rep = []
+                for cus in route.customer_list:
+                    route_rep.append(cus.id)
+                plan_rep.append(route_rep)
+
+            destroyed = relatedness_removal(problem,plan_rep,problem.travel_times)
+            repaired = regret_insertion(problem,destroyed,problem.travel_times)
+
+            route_list = []
+            for route in repaired:
+                cus_list = [problem.customers[cus_id] for cus_id in route]
+                route_obj = Route(cus_list, problem.travel_times)
+                route_list.append(route_obj)
+            self.routes = route_list
 
     def destroy_and_repiar(self,problem):
         destroyed_sol = relatedness_removal(problem,self.routes,problem.travel_times)

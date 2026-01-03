@@ -28,7 +28,7 @@ def evo():
     # 设置参数
     trace = True
     size = int(sys.argv[5])
-    maxiter = 2000
+    maxiter = 200
     N = 50
 
     spec_init = True

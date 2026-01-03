@@ -43,16 +43,14 @@ def relatedness_removal(problem, current, val_matrix,
 
     return destroyed_solution
 
-def get_regret_single_insertion(problem, routes, customer,val_matrix):
+def get_regret_single_insertion(problem, routes, customer, val_matrix):
     relevant_insertions = {}
     for route_idx in range(len(routes)):
         for i in range(len(routes[route_idx])+1):
             dict_key = (customer, i, tuple(routes[route_idx]))
-            if dict_key not in self.insertions:
+            if dict_key not in problem.insertions:
                 updated_route = routes[route_idx][:i] + [customer] + routes[route_idx][i:]
-                if check_route_feasibility(updated_route, problem.time_matrix, problem.time_windows,
-                                        problem.service_times, problem.demands,
-                                        problem.vehicle_capacity):
+                if check_route_feasibility(updated_route, problem):
                     if i == 0:
                         cost_difference = val_matrix[0, updated_route[0]] + val_matrix[
                             updated_route[0], updated_route[1]] - val_matrix[0, updated_route[1]]
@@ -68,11 +66,11 @@ def get_regret_single_insertion(problem, routes, customer,val_matrix):
                     relevant_insertions[dict_key] = cost_difference
 
                 else:
-                    self.insertions[dict_key] = False
+                    problem.insertions[dict_key] = False
                     relevant_insertions[dict_key] = False
 
             else:
-                relevant_insertions[dict_key] = self.insertions[dict_key]
+                relevant_insertions[dict_key] = problem.insertions[dict_key]
 
     relevant_insertions = {key: relevant_insertions[key] for key in relevant_insertions if
                            relevant_insertions[key] != False}
@@ -132,26 +130,28 @@ def determine_nr_nodes_to_remove(nb_customers, omega_bar_minus=5, omega_minus=0.
     r = random.randint(round(n_minus), round(n_plus))
     return r
 
-def check_route_feasibility(route, time_matrix, time_windows, service_times, demands_data, truck_capacity):
+def check_route_feasibility(route, problem):
     if len(route) < 3 or route[0] != 0 or route[-1] != 0:
         return False
 
-    current_time = max(time_matrix[0, route[1]], time_windows[route[1], 0])
+    time_matrix =problem.travel_times
+
+    current_time = max(time_matrix[0, route[1]], problem.customers[route[1]].time_window[0])
     total_capacity = 0
 
     for i in range(1, len(route)):
-        if round(current_time, 3) > time_windows[route[i], 1]:
+        if round(current_time, 3) >  problem.customers[route[i]].time_window[1]:
             #print("Time Window violated")
             return False
-        current_time += service_times[route[i]]
-        total_capacity += demands_data[route[i]]
-        if round(total_capacity, 3) > truck_capacity:
+        current_time += problem.customers[route[i]].servicetime
+        total_capacity += problem.customers[route[i]].demand
+        if round(total_capacity, 3) > problem.capacity:
             #print("Truck Capacity Violated")
             return False
         if i < len(route) - 1:
             # travel to next node
             current_time += time_matrix[route[i], route[i + 1]]
-            current_time = max(current_time, time_windows[route[i + 1], 0])
+            current_time = max(current_time, problem.customers[route[i+1]].time_window[0])
     return True
 
 def scaled(matrix):
