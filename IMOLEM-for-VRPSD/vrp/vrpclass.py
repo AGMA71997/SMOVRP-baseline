@@ -321,7 +321,7 @@ class Plan:
 
     def mutation(self, problem, mutation_rate, elastic_rate, squeeze_rate, shuffle_rate):
         if random.random() < mutation_rate:
-            '''if random.random() < elastic_rate:
+            if random.random() < elastic_rate:
                 self.__partial_swap()
             elif random.random() < squeeze_rate:
                 self.__merge_shortest_route(problem)
@@ -329,8 +329,8 @@ class Plan:
                 self.__split_longest_route(problem)
             for route in self.routes:
                 if random.random() < shuffle_rate:
-                    route.random_shuffle()'''
-            plan_rep = []
+                    route.random_shuffle()
+            '''plan_rep = []
             for route in self.routes:
                 route_rep = []
                 for cus in route.customer_list:
@@ -345,12 +345,7 @@ class Plan:
                 cus_list = [problem.customers[cus_id] for cus_id in route]
                 route_obj = Route(cus_list, problem.travel_times)
                 route_list.append(route_obj)
-            self.routes = route_list
-
-    def destroy_and_repiar(self,problem):
-        destroyed_sol = relatedness_removal(problem,self.routes,problem.travel_times)
-        repaired_sol = regret_insertion(problem,destroyed_sol,problem.travel_times)
-        return repaired_sol
+            self.routes = route_list'''
 
     def RSM(self, N, problem):
         sum_makespan = 0

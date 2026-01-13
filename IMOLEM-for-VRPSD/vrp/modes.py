@@ -149,29 +149,29 @@ def lem(evo_param, problem):
 
                 clf.fit(vectors, category)
 
-            if evo_param.spec_inst:
-                to_add = []
-                newP = util.instantiating(problem, evo_param.size // 2, max_route, clf)
-                for plan in newP:
-                    feasible = plan.assess_plan_feasibility(problem)
-                    if feasible:
-                        to_add.append(plan)
-                good = [plan.copy(problem.travel_times) for plan in Q[:evo_param.size // 2]]
-                # for plan in newP:
-                #    plan.mutation(problem, 0.4, 0.5, 0.5, 0.3)
-                for plan in good:
-                    plan.mutation(problem, 1, 0.5, 0.5, 0.3)
-                    feasible = plan.assess_plan_feasibility(problem)
-                    if feasible:
-                        to_add.append(plan)
-                P = to_add
-            else:
-                P = util.instantiating(problem, evo_param.size, max_route, clf)
+                if evo_param.spec_inst:
+                    to_add = []
+                    newP = util.instantiating(problem, evo_param.size // 2, max_route, clf)
+                    for plan in newP:
+                        feasible = plan.assess_plan_feasibility(problem)
+                        if feasible:
+                            to_add.append(plan)
+                    good = [plan.copy(problem.travel_times) for plan in Q[:evo_param.size // 2]]
+                    # for plan in newP:
+                    #    plan.mutation(problem, 0.4, 0.5, 0.5, 0.3)
+                    for plan in good:
+                        plan.mutation(problem, 1, 0.5, 0.5, 0.3)
+                        feasible = plan.assess_plan_feasibility(problem)
+                        if feasible:
+                            to_add.append(plan)
+                    P = to_add
+                else:
+                    P = util.instantiating(problem, evo_param.size, max_route, clf)
 
-        else:
-            # newP = [plan.copy() for plan in P]
-            for plan in P:
-                plan.mutation(problem, 0.4, 0.5, 0.5, 0.3)
+            else:
+                # newP = [plan.copy() for plan in P]
+                for plan in P:
+                    plan.mutation(problem, 1, 0.5, 0.5, 0.3)
 
         if evo_param.trace:
             result = util.show_result(Q, evo_param.N, problem)[0]
